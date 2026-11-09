@@ -19,6 +19,12 @@
             }
         }
     </script>
+
+    <!-- Excel ve PDF Dışa Aktarma Kütüphaneleri -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+
     <!-- Firebase SDK (Modüler) -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
@@ -257,6 +263,10 @@
                     Müşteriler
                     <span id="customer-count" class="text-xs font-semibold bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-full">0</span>
                 </h3>
+                <button onclick="exportAllCustomersToExcel()" class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-xl text-xs flex items-center gap-2 transition-all shadow-md">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Tüm Liste (Excel)
+                </button>
             </div>
             
             <div id="customer-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
@@ -282,9 +292,14 @@
                 <button onclick="showDashboard()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-white transition-colors">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
                 </button>
-                <div class="flex-1 min-w-0">
-                    <h2 id="detail-customer-name" class="text-xl font-bold text-slate-800 dark:text-white truncate">...</h2>
-                    <p id="detail-customer-phone" class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">...</p>
+                <div class="flex-1 min-w-0 flex justify-between items-center">
+                    <div class="min-w-0 pr-4">
+                        <h2 id="detail-customer-name" class="text-xl font-bold text-slate-800 dark:text-white truncate">...</h2>
+                        <p id="detail-customer-phone" class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">...</p>
+                    </div>
+                    <button onclick="openEditCustomerModal()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-500 hover:text-indigo-600 transition-colors shrink-0" title="Müşteriyi Düzenle">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path></svg>
+                    </button>
                 </div>
             </div>
         </header>
@@ -307,7 +322,19 @@
             </div>
 
             <div>
-                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">İşlem Geçmişi</h3>
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white flex items-center gap-2">İşlem Geçmişi</h3>
+                    <div class="flex items-center gap-2">
+                        <button onclick="exportCustomerToExcel()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            Excel İndir
+                        </button>
+                        <button onclick="exportCustomerToPDF()" class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                            PDF İndir
+                        </button>
+                    </div>
+                </div>
                 <div id="transaction-list" class="space-y-3"></div>
                 <div id="tx-empty-state" class="hidden card-panel rounded-2xl text-center py-10 border-dashed">
                     <p class="text-slate-500 dark:text-slate-400 text-sm">Henüz bir işlem yok.</p>
@@ -377,6 +404,29 @@
                 </div>
                 <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3.5 rounded-xl transition-all shadow-md mt-2">
                     Kaydet
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Müşteri Düzenle Modal -->
+    <div id="edit-customer-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="card-panel rounded-3xl w-full max-w-sm overflow-hidden transform transition-all modal-enter" id="edit-customer-content">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-white/5">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white">Müşteri Düzenle</h3>
+                <button onclick="closeModal('edit-customer-modal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            <form id="edit-customer-form" class="p-6 space-y-4" onsubmit="handleEditCustomer(event)">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Müşteri Adı Soyadı <span class="text-rose-500">*</span></label>
+                    <input type="text" id="edit-customer-name" required class="input-style w-full px-4 py-3 rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Telefon Numarası <span class="text-slate-400 text-xs">(İsteğe bağlı)</span></label>
+                    <input type="tel" id="edit-customer-phone" placeholder="05XX XXX XX XX" class="input-style w-full px-4 py-3 rounded-xl">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3.5 rounded-xl transition-all shadow-md mt-2">
+                    Değişiklikleri Kaydet
                 </button>
             </form>
         </div>
@@ -818,6 +868,7 @@
                 appData.users[currentUser].transactions = appData.users[currentUser].transactions.filter(t => t.id !== txId);
                 await saveData();
                 showToast("İşlem silindi.", "success");
+                renderCustomerDetail();
             });
         };
 
@@ -876,6 +927,18 @@
 
             window.openModal('transaction-modal');
         };
+        
+        // --- MÜŞTERİ BİLGİSİ DÜZENLEME MODALI ---
+        window.openEditCustomerModal = () => {
+            if (!currentCustomerId || !appData.users[currentUser]) return;
+            const customer = appData.users[currentUser].customers.find(c => c.id === currentCustomerId);
+            if (!customer) return;
+
+            document.getElementById('edit-customer-name').value = customer.name || '';
+            document.getElementById('edit-customer-phone').value = customer.phone || '';
+            
+            openModal('edit-customer-modal');
+        };
 
         const calcTotal = () => {
             if(document.getElementById('tx-type').value !== 'sale') return;
@@ -889,6 +952,135 @@
         document.getElementById('tx-qty').addEventListener('input', calcTotal);
         document.getElementById('tx-price').addEventListener('input', calcTotal);
 
+        // --- EXCEL VE PDF DIŞA AKTARMA FONKSİYONLARI ---
+        function sanitizeTr(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/Ğ/g, 'G').replace(/ğ/g, 'g')
+                .replace(/Ü/g, 'U').replace(/ü/g, 'u')
+                .replace(/Ş/g, 'S').replace(/ş/g, 's')
+                .replace(/İ/g, 'I').replace(/ı/g, 'i')
+                .replace(/Ö/g, 'O').replace(/ö/g, 'o')
+                .replace(/Ç/g, 'C').replace(/ç/g, 'c');
+        }
+
+        window.exportCustomerToExcel = () => {
+            if (!currentUser || !currentCustomerId || !appData.users[currentUser]) return;
+            const customer = appData.users[currentUser].customers.find(c => c.id === currentCustomerId);
+            if (!customer) return;
+
+            const txs = (appData.users[currentUser].transactions || [])
+                .filter(t => t.customerId === currentCustomerId)
+                .sort((a,b) => new Date(a.date) - new Date(b.date));
+
+            const bal = getCustomerBalance(currentCustomerId);
+
+            const data = [
+                ["MÜŞTERİ HESAP EKSTRESİ"],
+                ["Müşteri Adı:", customer.name],
+                ["Telefon:", customer.phone || "-"],
+                ["Güncel Bakiye:", currencyFmt.format(bal)],
+                [],
+                ["Tarih", "İşlem Türü", "Detay / Mal Cinsi", "Miktar", "Birim Fiyat", "Lokasyon / Ödeme Türü", "Tutar (TL)"]
+            ];
+
+            txs.forEach(t => {
+                const isSale = t.type === 'sale';
+                data.push([
+                    t.date,
+                    isSale ? "Satış (Borç)" : "Ödeme (Tahsilat)",
+                    isSale ? t.item : "Ödeme Alındı",
+                    isSale ? t.qty : "-",
+                    isSale ? t.price : "-",
+                    isSale ? (t.location || "-") : (t.paymentType || "-"),
+                    isSale ? t.amount : -t.amount
+                ]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Ekstre");
+            XLSX.writeFile(wb, `${customer.name.replace(/[^a-zA-Z0-9çğıöşüÇĞİÖŞÜ]/g, "_")}_Ekstre.xlsx`);
+            showToast("Excel ekstresi indirildi.", "success");
+        };
+
+        window.exportCustomerToPDF = () => {
+            if (!currentUser || !currentCustomerId || !appData.users[currentUser]) return;
+            const customer = appData.users[currentUser].customers.find(c => c.id === currentCustomerId);
+            if (!customer) return;
+
+            const txs = (appData.users[currentUser].transactions || [])
+                .filter(t => t.customerId === currentCustomerId)
+                .sort((a,b) => new Date(a.date) - new Date(b.date));
+
+            const bal = getCustomerBalance(currentCustomerId);
+
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+
+            doc.setFontSize(18);
+            doc.text(sanitizeTr("MUSTERI HESAP EKSTRESI"), 14, 20);
+
+            doc.setFontSize(11);
+            doc.text(sanitizeTr(`Musteri: ${customer.name}`), 14, 30);
+            doc.text(sanitizeTr(`Telefon: ${customer.phone || '-'}`), 14, 37);
+            doc.text(sanitizeTr(`Guncel Bakiye: ${currencyFmt.format(bal)}`), 14, 44);
+            doc.text(sanitizeTr(`Tarih: ${new Date().toLocaleDateString('tr-TR')}`), 14, 51);
+
+            const tableRows = txs.map(t => {
+                const isSale = t.type === 'sale';
+                return [
+                    t.date,
+                    sanitizeTr(isSale ? "Satis (+)" : "Odeme (-)"),
+                    sanitizeTr(isSale ? t.item : "Odeme Alindi"),
+                    isSale ? t.qty : "-",
+                    isSale ? `TL ${t.price}` : "-",
+                    sanitizeTr(isSale ? (t.location || "-") : (t.paymentType || "-")),
+                    `TL ${isSale ? t.amount : -t.amount}`
+                ];
+            });
+
+            doc.autoTable({
+                startY: 58,
+                head: [[sanitizeTr('Tarih'), sanitizeTr('Tur'), sanitizeTr('Detay'), sanitizeTr('Miktar'), sanitizeTr('B.Fiyat'), sanitizeTr('Yer/Odeme'), sanitizeTr('Tutar')]],
+                body: tableRows,
+                theme: 'striped',
+                headStyles: { fillColor: [99, 102, 241] }
+            });
+
+            doc.save(`${customer.name.replace(/[^a-zA-Z0-9çğıöşüÇĞİÖŞÜ]/g, "_")}_Ekstre.pdf`);
+            showToast("PDF ekstresi indirildi.", "success");
+        };
+
+        window.exportAllCustomersToExcel = () => {
+            if (!currentUser || !appData.users[currentUser]) return;
+            const customers = appData.users[currentUser].customers || [];
+
+            if (customers.length === 0) {
+                return showToast("İndirilecek müşteri bulunmuyor.", "error");
+            }
+
+            const data = [
+                ["TÜM MÜŞTERİ LİSTESİ VE BAKİYELERİ"],
+                ["Kullanıcı:", currentUser],
+                ["Tarih:", new Date().toLocaleDateString('tr-TR')],
+                [],
+                ["Müşteri Adı", "Telefon Numarası", "Güncel Bakiye (TL)", "Durum"]
+            ];
+
+            customers.forEach(c => {
+                const bal = getCustomerBalance(c.id);
+                const status = bal > 0 ? "Borçlu" : (bal < 0 ? "Alacaklı" : "Hesap Temiz");
+                data.push([c.name, c.phone || "-", bal, status]);
+            });
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Musteri_Listesi");
+            XLSX.writeFile(wb, `Musteri_Listesi_${currentUser}.xlsx`);
+            showToast("Tüm müşteri listesi Excel olarak indirildi.", "success");
+        };
+
         // --- FORM İŞLEMLERİ ---
         window.handleAddCustomer = async (e) => {
             e.preventDefault();
@@ -900,6 +1092,27 @@
                 await saveData();
                 closeModal('add-customer-modal');
                 showToast('Müşteri eklendi', 'success');
+            }
+        };
+        
+        window.handleEditCustomer = async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('edit-customer-name').value.trim();
+            const phone = document.getElementById('edit-customer-phone').value.trim();
+            
+            if(name && currentCustomerId) {
+                const customer = appData.users[currentUser].customers.find(c => c.id === currentCustomerId);
+                if (customer) {
+                    customer.name = name;
+                    customer.phone = phone;
+                    await saveData();
+                    
+                    document.getElementById('detail-customer-name').textContent = customer.name;
+                    document.getElementById('detail-customer-phone').textContent = customer.phone ? `Tel: ${customer.phone}` : 'Telefon Belirtilmemiş';
+                    
+                    closeModal('edit-customer-modal');
+                    showToast('Müşteri bilgileri güncellendi', 'success');
+                }
             }
         };
 
@@ -950,6 +1163,7 @@
                 await saveData();
                 closeModal('transaction-modal');
                 showToast(editId ? 'İşlem güncellendi' : 'İşlem kaydedildi', 'success');
+                renderCustomerDetail();
             }
         };
 
