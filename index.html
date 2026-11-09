@@ -36,7 +36,6 @@
         const analytics = getAnalytics(app);
         const db = getDatabase(app);
 
-        // Firebase fonksiyonlarını global alana aktarıyoruz
         window.firebaseDb = db;
         window.firebaseRef = ref;
         window.firebaseSet = set;
@@ -128,7 +127,6 @@
         .modal-enter-active { opacity: 1; transform: scale(1) translateY(0); transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1); }
         .modal-exit-active { opacity: 0; transform: scale(0.95) translateY(10px); transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1); }
 
-        input[type="password"]::-webkit-inner-spin-button, input[type="password"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         
         .toast-enter { transform: translateY(100%); opacity: 0; }
@@ -148,7 +146,7 @@
                 </svg>
             </div>
             <h1 class="text-3xl font-bold tracking-tight text-slate-800 dark:text-white mb-2">Veresiye Defteri</h1>
-            <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">Ortak Bulut / Firebase Sistemi</p>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">Kişisel Hesap ve Borç Takibi</p>
 
             <div class="space-y-4">
                 <button onclick="switchAuthMode('login')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-xl transition-all shadow-lg">
@@ -168,16 +166,16 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Geri
             </button>
             <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-2">Hesabınıza Giriş Yapın</h2>
-            <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Kayıtlı kullanıcı adınız ve 6 haneli şifrenizle giriş yapın.</p>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Kullanıcı adınız ve şifrenizle giriş yapın.</p>
 
-            <form id="login-form" class="space-y-5">
+            <form id="login-form" class="space-y-5" onsubmit="handleLogin(event)">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kullanıcı Adı</label>
-                    <input type="text" id="login-username" required class="input-style w-full px-5 py-3.5 rounded-xl">
+                    <input type="text" id="login-username" autocomplete="username" required class="input-style w-full px-5 py-3.5 rounded-xl">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Şifre (6 Haneli Rakam)</label>
-                    <input type="password" id="login-password" inputmode="numeric" pattern="\d{6}" maxlength="6" required class="input-style w-full px-5 py-3.5 rounded-xl text-center text-lg tracking-[0.5em] font-mono">
+                    <input type="password" id="login-password" inputmode="numeric" maxlength="6" autocomplete="current-password" required class="input-style w-full px-5 py-3.5 rounded-xl text-center text-lg tracking-[0.5em] font-mono">
                 </div>
                 <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-xl transition-all shadow-lg mt-2">
                     Giriş Yap
@@ -193,16 +191,16 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Geri
             </button>
             <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-2">Yeni Hesap Oluştur</h2>
-            <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Bulut tabanlı ortak sisteme kaydolun.</p>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Sisteme hızlıca kaydolun.</p>
 
-            <form id="register-form" class="space-y-5">
+            <form id="register-form" class="space-y-5" onsubmit="handleRegister(event)">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kullanıcı Adı Belirle</label>
-                    <input type="text" id="reg-username" required class="input-style w-full px-5 py-3.5 rounded-xl">
+                    <input type="text" id="reg-username" autocomplete="username" required class="input-style w-full px-5 py-3.5 rounded-xl">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">6 Haneli Rakam Şifre</label>
-                    <input type="password" id="reg-password" inputmode="numeric" pattern="\d{6}" maxlength="6" required class="input-style w-full px-5 py-3.5 rounded-xl text-center text-lg tracking-[0.5em] font-mono">
+                    <input type="password" id="reg-password" inputmode="numeric" maxlength="6" autocomplete="new-password" required class="input-style w-full px-5 py-3.5 rounded-xl text-center text-lg tracking-[0.5em] font-mono">
                 </div>
                 <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl transition-all shadow-lg mt-2">
                     Kayıt Ol ve Giriş Yap
@@ -330,7 +328,7 @@
                 <div>
                     <h4 class="font-bold text-slate-800 dark:text-white mb-1">Kullanıcı Adı Değiştir</h4>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Ayda sadece 1 defa değiştirilebilir.</p>
-                    <form id="change-username-form" class="space-y-3">
+                    <form id="change-username-form" class="space-y-3" onsubmit="handleUsernameChange(event)">
                         <input type="text" id="new-username-input" required placeholder="Yeni Kullanıcı Adı" class="input-style w-full px-4 py-2.5 rounded-xl text-sm">
                         <button type="submit" class="w-full bg-slate-800 dark:bg-white/10 hover:bg-slate-700 text-white font-medium py-2.5 rounded-xl text-sm transition-all">Kullanıcı Adını Güncelle</button>
                     </form>
@@ -339,8 +337,8 @@
                 <div class="pt-2">
                     <h4 class="font-bold text-slate-800 dark:text-white mb-1">Şifre Değiştir</h4>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">6 haneli rakam olmalıdır.</p>
-                    <form id="change-password-form" class="space-y-3">
-                        <input type="password" id="new-password-input" inputmode="numeric" pattern="\d{6}" maxlength="6" required placeholder="Yeni 6 Haneli Şifre" class="input-style w-full px-4 py-2.5 rounded-xl text-center text-lg tracking-widest font-mono">
+                    <form id="change-password-form" class="space-y-3" onsubmit="handlePasswordChange(event)">
+                        <input type="password" id="new-password-input" inputmode="numeric" maxlength="6" required placeholder="Yeni 6 Haneli Şifre" class="input-style w-full px-4 py-2.5 rounded-xl text-center text-lg tracking-widest font-mono">
                         <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-xl text-sm transition-all">Şifreyi Güncelle</button>
                     </form>
                 </div>
@@ -355,7 +353,7 @@
                 <h3 class="text-lg font-bold text-slate-800 dark:text-white">Yeni Müşteri Ekle</h3>
                 <button onclick="closeModal('add-customer-modal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>
-            <form id="add-customer-form" class="p-6 space-y-5">
+            <form id="add-customer-form" class="p-6 space-y-5" onsubmit="handleAddCustomer(event)">
                 <div>
                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Müşteri Adı Soyadı</label>
                     <input type="text" id="new-customer-name" required class="input-style w-full px-4 py-3 rounded-xl">
@@ -375,7 +373,7 @@
                 <button onclick="closeModal('transaction-modal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>
             
-            <form id="transaction-form" class="p-6 space-y-4 overflow-y-auto">
+            <form id="transaction-form" class="p-6 space-y-4 overflow-y-auto" onsubmit="handleTransactionSubmit(event)">
                 <input type="hidden" id="tx-type" value="sale">
 
                 <div id="sale-fields" class="space-y-4">
@@ -452,7 +450,6 @@
         const views = ['auth-choice-view', 'login-view', 'register-view', 'dashboard-view', 'customer-view'].map(id => document.getElementById(id));
         const themeToggle = document.getElementById('theme-toggle');
 
-        // Firebase'den veri çekme ve başlatma
         window.onload = async () => {
             const savedTheme = localStorage.getItem('veresiye_theme') || 'light';
             if(savedTheme === 'dark') {
@@ -464,10 +461,12 @@
             }
             document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
 
-            // Önce yerel önbellekten yükle
-            appData = JSON.parse(localStorage.getItem('veresiye_shared_pool')) || { users: {} };
+            // Yerel depolamadan yükle
+            const localData = JSON.parse(localStorage.getItem('veresiye_shared_pool'));
+            if (localData && localData.users) {
+                appData = localData;
+            }
 
-            // Firebase hazır olduğunda veritabanından güncel veriyi çek
             if (window.firebaseDb) {
                 await loadFromFirebase();
             } else {
@@ -482,13 +481,18 @@
                 const dbRef = window.firebaseRef(window.firebaseDb, 'veresiye_pool');
                 const snapshot = await window.firebaseGet(dbRef);
                 if (snapshot.exists()) {
-                    appData = snapshot.val() || { users: {} };
-                    localStorage.setItem('veresiye_shared_pool', JSON.stringify(appData));
-                } else if (Object.keys(appData.users).length > 0) {
+                    const remoteData = snapshot.val();
+                    if (remoteData && remoteData.users && Object.keys(remoteData.users).length > 0) {
+                        appData = remoteData;
+                        localStorage.setItem('veresiye_shared_pool', JSON.stringify(appData));
+                    } else if (appData.users && Object.keys(appData.users).length > 0) {
+                        await window.firebaseSet(dbRef, appData);
+                    }
+                } else if (appData.users && Object.keys(appData.users).length > 0) {
                     await window.firebaseSet(dbRef, appData);
                 }
             } catch (err) {
-                console.error("Firebase'den veri okunurken hata oluştu, yerel veriler kullanılıyor:", err);
+                console.error("Firebase veri yükleme hatası:", err);
             }
         }
 
@@ -502,7 +506,6 @@
             }
         });
 
-        // Veriyi hem localStorage'a hem de Firebase'e kaydet
         async function saveData() {
             localStorage.setItem('veresiye_shared_pool', JSON.stringify(appData));
             if (window.firebaseDb && window.firebaseRef && window.firebaseSet) {
@@ -510,7 +513,7 @@
                     const dbRef = window.firebaseRef(window.firebaseDb, 'veresiye_pool');
                     await window.firebaseSet(dbRef, appData);
                 } catch (err) {
-                    console.error("Firebase'e kayıt yapılamadı:", err);
+                    console.error("Firebase kayıt hatası:", err);
                 }
             }
         }
@@ -544,13 +547,17 @@
             switchView('customer-view');
         };
 
-        // --- AUTH: GİRİŞ VE KAYIT ---
-        document.getElementById('register-form').addEventListener('submit', async (e) => {
+        // --- AUTH İŞLEMLERİ (GÜNCELLENDİ) ---
+        window.handleRegister = async (e) => {
             e.preventDefault();
             const uname = document.getElementById('reg-username').value.trim();
             const pin = document.getElementById('reg-password').value;
 
-            if(pin.length !== 6) return showToast("Şifre 6 haneli rakam olmalıdır.", "error");
+            if(!uname || pin.length !== 6) {
+                return showToast("Kullanıcı adı girin ve şifre 6 haneli rakam olmalıdır.", "error");
+            }
+
+            if(!appData.users) appData.users = {};
 
             if(appData.users[uname]) {
                 return showToast("Bu kullanıcı adı zaten alınmış! Giriş yapmayı deneyin.", "error");
@@ -567,15 +574,20 @@
             currentUser = uname;
             document.getElementById('register-form').reset();
             showDashboard();
-            showToast("Kayıt başarılı, buluta kaydedildi!", "success");
-        });
+            showToast("Kayıt başarılı, hoş geldiniz!", "success");
+        };
 
-        document.getElementById('login-form').addEventListener('submit', (e) => {
+        window.handleLogin = async (e) => {
             e.preventDefault();
             const uname = document.getElementById('login-username').value.trim();
             const pin = document.getElementById('login-password').value;
 
-            if(!appData.users[uname]) {
+            // Giriş anında verileri Firebase'den anlık tazeleyelim (Eşitleme kontrolü)
+            if (window.firebaseDb) {
+                await loadFromFirebase();
+            }
+
+            if(!appData.users || !appData.users[uname]) {
                 return showToast("Hesap bulunamadı! Önce kayıt olmalısınız.", "error");
             }
 
@@ -587,7 +599,7 @@
             document.getElementById('login-form').reset();
             showDashboard();
             showToast(`Hoş geldiniz, ${uname}`, "success");
-        });
+        };
 
         window.logout = () => {
             currentUser = null;
@@ -596,12 +608,12 @@
 
         // --- HESAPLAMA ---
         function getCustomerBalance(customerId) {
-            const txs = appData.users[currentUser].transactions.filter(t => t.customerId === customerId);
+            const txs = (appData.users[currentUser].transactions || []).filter(t => t.customerId === customerId);
             return txs.reduce((sum, tx) => sum + (tx.type === 'sale' ? tx.amount : -tx.amount), 0);
         }
 
         function getTotalBalance() {
-            return appData.users[currentUser].customers.reduce((sum, c) => sum + getCustomerBalance(c.id), 0);
+            return (appData.users[currentUser].customers || []).reduce((sum, c) => sum + getCustomerBalance(c.id), 0);
         }
 
         // --- RENDER ---
@@ -609,7 +621,7 @@
             const total = getTotalBalance();
             document.getElementById('total-balance').textContent = currencyFmt.format(total);
             
-            const customers = appData.users[currentUser].customers.sort((a,b) => a.name.localeCompare(b.name));
+            const customers = (appData.users[currentUser].customers || []).sort((a,b) => a.name.localeCompare(b.name));
             document.getElementById('customer-count').textContent = customers.length;
             
             const list = document.getElementById('customer-list');
@@ -654,7 +666,7 @@
             balEl.textContent = currencyFmt.format(bal);
             balEl.className = `text-5xl font-bold tracking-tight ${bal > 0 ? 'text-rose-600 dark:text-rose-400' : (bal < 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-white')}`;
             
-            const txs = appData.users[currentUser].transactions
+            const txs = (appData.users[currentUser].transactions || [])
                 .filter(t => t.customerId === currentCustomerId)
                 .sort((a,b) => new Date(b.date) - new Date(a.date) || b.id - a.id);
                 
@@ -798,19 +810,20 @@
         document.getElementById('tx-price').addEventListener('input', calcTotal);
 
         // --- FORM İŞLEMLERİ ---
-        document.getElementById('add-customer-form').addEventListener('submit', async (e) => {
+        window.handleAddCustomer = async (e) => {
             e.preventDefault();
             const name = document.getElementById('new-customer-name').value.trim();
             if(name) {
+                if(!appData.users[currentUser].customers) appData.users[currentUser].customers = [];
                 appData.users[currentUser].customers.push({ id: Date.now().toString(), name });
                 await saveData();
                 closeModal('add-customer-modal');
                 renderDashboard();
                 showToast('Müşteri eklendi', 'success');
             }
-        });
+        };
 
-        document.getElementById('transaction-form').addEventListener('submit', async (e) => {
+        window.handleTransactionSubmit = async (e) => {
             e.preventDefault();
             const isSale = document.getElementById('tx-type').value === 'sale';
             const amount = parseFloat(document.getElementById('tx-total').value);
@@ -833,16 +846,17 @@
                     tx.paymentType = document.getElementById('tx-payment-type').value;
                 }
 
+                if(!appData.users[currentUser].transactions) appData.users[currentUser].transactions = [];
                 appData.users[currentUser].transactions.push(tx);
                 await saveData();
                 closeModal('transaction-modal');
                 renderCustomerDetail();
                 showToast('İşlem kaydedildi', 'success');
             }
-        });
+        };
 
         // --- AYARLAR ---
-        document.getElementById('change-username-form').addEventListener('submit', async (e) => {
+        window.handleUsernameChange = async (e) => {
             e.preventDefault();
             const newName = document.getElementById('new-username-input').value.trim();
             if(!newName) return;
@@ -868,9 +882,9 @@
             document.getElementById('dash-username').textContent = currentUser;
             document.getElementById('change-username-form').reset();
             showToast("Kullanıcı adı başarıyla değiştirildi.", "success");
-        });
+        };
 
-        document.getElementById('change-password-form').addEventListener('submit', async (e) => {
+        window.handlePasswordChange = async (e) => {
             e.preventDefault();
             const newPin = document.getElementById('new-password-input').value;
 
@@ -882,7 +896,7 @@
             await saveData();
             document.getElementById('change-password-form').reset();
             showToast("Şifreniz güncellendi.", "success");
-        });
+        };
 
         window.showToast = (msg, type = 'info') => {
             const box = document.createElement('div');
