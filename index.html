@@ -374,13 +374,68 @@
                     </form>
                 </div>
 
-                <div class="pt-2">
+                <div>
                     <h4 class="font-bold text-slate-800 dark:text-white mb-1">Şifre Değiştir</h4>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">6 haneli rakam olmalıdır.</p>
                     <form id="change-password-form" class="space-y-3" onsubmit="handlePasswordChange(event)">
                         <input type="password" id="new-password-input" inputmode="numeric" maxlength="6" required placeholder="Yeni 6 Haneli Şifre" class="input-style w-full px-4 py-2.5 rounded-xl text-center text-lg tracking-widest font-mono">
                         <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-xl text-sm transition-all">Şifreyi Güncelle</button>
                     </form>
+                </div>
+                
+                <!-- KULLANICIYI SİL BÖLÜMÜ -->
+                <div class="pt-4 border-t border-rose-100 dark:border-rose-500/20">
+                    <h4 class="font-bold text-rose-600 dark:text-rose-400 mb-1">Hesabı Sil</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Tüm verileriniz kalıcı olarak silinecektir.</p>
+                    <button onclick="startDeleteAccountFlow()" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-500/10 dark:hover:bg-rose-500/20 dark:text-rose-400 font-medium py-2.5 rounded-xl text-sm transition-all border border-rose-200 dark:border-rose-500/30">
+                        Kullanıcıyı Sil
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- HESAP SİLME MODALI (3 AŞAMALI) -->
+    <div id="delete-account-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="card-panel rounded-3xl w-full max-w-sm p-6 text-center transform transition-all modal-enter" id="delete-account-content">
+            
+            <!-- Aşama 1: Emin misiniz? -->
+            <div id="del-step-1">
+                <div class="w-12 h-12 bg-rose-100 dark:bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">Hesabı Sil</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Hesabı silmek istediğinize emin misiniz?</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="closeModal('delete-account-modal')" class="bg-slate-200 dark:bg-white/10 hover:bg-slate-300 text-slate-800 dark:text-white font-semibold py-3 rounded-xl transition-all">Hayır</button>
+                    <button onclick="nextDeleteStep(2)" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl transition-all shadow-md">Evet</button>
+                </div>
+            </div>
+
+            <!-- Aşama 2: Kalıcı olarak silinecek, onaylıyor musunuz? -->
+            <div id="del-step-2" class="hidden">
+                <div class="w-12 h-12 bg-rose-100 dark:bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </div>
+                <h3 class="text-lg font-bold text-rose-600 dark:text-rose-400 mb-2">Kalıcı Silme Onayı</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">Hesabınız ve tüm müşteri/işlem kayıtlarınız kalıcı olarak silinecektir. Bu işlem geri alınamaz. Onaylıyor musunuz?</p>
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="closeModal('delete-account-modal')" class="bg-slate-200 dark:bg-white/10 hover:bg-slate-300 text-slate-800 dark:text-white font-semibold py-3 rounded-xl transition-all">Onaylama</button>
+                    <button onclick="nextDeleteStep(3)" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl transition-all shadow-md">Onayla</button>
+                </div>
+            </div>
+
+            <!-- Aşama 3: Şifre ile Doğrulama -->
+            <div id="del-step-3" class="hidden">
+                <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-500/20 text-indigo-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2">Güvenlik Doğrulaması</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mb-4">Hesabınızı silmek için mevcut şifrenizi girmelisiniz.</p>
+                <input type="password" id="del-account-password" inputmode="numeric" maxlength="6" placeholder="6 Haneli Şifre" class="input-style w-full px-4 py-3 rounded-xl text-center text-lg tracking-[0.5em] font-mono mb-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="closeModal('delete-account-modal')" class="bg-slate-200 dark:bg-white/10 hover:bg-slate-300 text-slate-800 dark:text-white font-semibold py-3 rounded-xl transition-all">İptal</button>
+                    <button onclick="confirmAccountDeletion()" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl transition-all shadow-md">Kalıcı Olarak Sil</button>
                 </div>
             </div>
         </div>
@@ -529,6 +584,12 @@
             }
             document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
 
+            // Kayıtlı son kullanıcı adını al ve giriş formuna yaz
+            const lastUser = localStorage.getItem('veresiye_last_user');
+            if(lastUser) {
+                document.getElementById('login-username').value = lastUser;
+            }
+
             const localData = JSON.parse(localStorage.getItem('veresiye_shared_pool'));
             if (localData && localData.users) {
                 appData = localData;
@@ -601,7 +662,13 @@
 
         window.switchAuthMode = (mode) => {
             if(mode === 'choice') switchView('auth-choice-view');
-            else if(mode === 'login') switchView('login-view');
+            else if(mode === 'login') {
+                const lastUser = localStorage.getItem('veresiye_last_user');
+                if(lastUser) {
+                    document.getElementById('login-username').value = lastUser;
+                }
+                switchView('login-view');
+            }
             else if(mode === 'register') switchView('register-view');
         };
 
@@ -648,8 +715,12 @@
             };
             await saveData();
 
+            localStorage.setItem('veresiye_last_user', uname);
             currentUser = uname;
+            
             document.getElementById('register-form').reset();
+            document.getElementById('login-username').value = uname;
+            
             showDashboard();
             showToast("Kayıt başarılı, hoş geldiniz!", "success");
         };
@@ -667,8 +738,12 @@
                 return showToast("Hatalı şifre!", "error");
             }
 
+            localStorage.setItem('veresiye_last_user', uname);
             currentUser = uname;
+            
             document.getElementById('login-form').reset();
+            document.getElementById('login-username').value = uname;
+
             showDashboard();
             showToast(`Hoş geldiniz, ${uname}`, "success");
         };
@@ -676,6 +751,53 @@
         window.logout = () => {
             currentUser = null;
             switchView('auth-choice-view');
+            
+            const lastUser = localStorage.getItem('veresiye_last_user');
+            if(lastUser) {
+                document.getElementById('login-username').value = lastUser;
+            }
+        };
+
+        // --- HESAP SİLME İŞLEMLERİ ---
+        window.startDeleteAccountFlow = () => {
+            closeModal('settings-modal'); 
+            
+            document.getElementById('del-step-1').classList.remove('hidden');
+            document.getElementById('del-step-2').classList.add('hidden');
+            document.getElementById('del-step-3').classList.add('hidden');
+            document.getElementById('del-account-password').value = '';
+            
+            setTimeout(() => { openModal('delete-account-modal'); }, 300);
+        };
+
+        window.nextDeleteStep = (step) => {
+            document.getElementById('del-step-1').classList.add('hidden');
+            document.getElementById('del-step-2').classList.add('hidden');
+            document.getElementById('del-step-3').classList.add('hidden');
+            document.getElementById(`del-step-${step}`).classList.remove('hidden');
+        };
+
+        window.confirmAccountDeletion = async () => {
+            const pwd = document.getElementById('del-account-password').value;
+            if (pwd !== appData.users[currentUser].pin) {
+                return showToast("Hatalı şifre! Hesap silinemedi.", "error");
+            }
+            
+            // Hesabı tamamen sil
+            delete appData.users[currentUser];
+            
+            // Eğer kaydedilmiş son kullanıcı adı silinen hesapsa onu da temizle
+            if(localStorage.getItem('veresiye_last_user') === currentUser) {
+                localStorage.removeItem('veresiye_last_user');
+                document.getElementById('login-username').value = '';
+            }
+
+            await saveData();
+            closeModal('delete-account-modal');
+            
+            currentUser = null;
+            switchView('auth-choice-view');
+            showToast("Hesabınız kalıcı olarak silindi.", "success");
         };
 
         // --- HESAPLAMA ---
@@ -1190,6 +1312,9 @@
             delete appData.users[currentUser];
             currentUser = newName;
             await saveData();
+
+            localStorage.setItem('veresiye_last_user', newName); // Değişen adı da kaydet
+            document.getElementById('login-username').value = newName;
 
             document.getElementById('dash-username').textContent = currentUser;
             document.getElementById('change-username-form').reset();
