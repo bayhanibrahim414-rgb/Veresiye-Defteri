@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="tr" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gelişmiş Veresiye Defteri</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        /* Ekranın sağa sola kaymasını ve metin seçilmesini engelle (Mobil uygulama hissi) */
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            touch-action: manipulation;
+        }
+
+        /* Input alanlarında yazı seçimine izin ver */
+        input, textarea, select {
+            user-select: text;
+            -webkit-user-select: text;
+        }
+
+        html, body {
+            width: 100%;
+            height: 100%;
+            overflow-x: hidden;
+            position: relative;
+            background-color: #f8fafc;
+            color: #0f172a;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .card-panel {
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: all 0.3s ease;
+        }
+
+        .input-style {
+            background-color: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            color: #0f172a;
+        }
+        .input-style:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 2px rgba(99,102,241,0.2);
+            outline: none;
+        }
+
+        /* KARANLIK MOD (Glassmorphism) */
+        html.dark body {
+            background-color: #0f172a;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,0.2) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,0.1) 0, transparent 50%);
+            background-attachment: fixed;
+            color: #f8fafc;
+        }
+
+        html.dark .card-panel {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        html.dark .input-style {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            color: white;
+        }
+
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        html.dark ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); }
+
+        .modal-enter { opacity: 0; transform: scale(0.95) translateY(10px); }
+        .modal-enter-active { opacity: 1; transform: scale(1) translateY(0); transition: all 250ms cubic-bezier(0.4, 0, 0.2, 1); }
+        .modal-exit-active { opacity: 0; transform: scale(0.95) translateY(10px); transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1); }
+
+        input[type="password"]::-webkit-inner-spin-button, input[type="password"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type="number"]::-webkit-inner-spin-button, input[type="number"]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        
+        .toast-enter { transform: translateY(100%); opacity: 0; }
+        .toast-enter-active { transform: translateY(0); opacity: 1; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+    </style>
+</head>
+<body class="pb-10">
+
+    <div id="toast-container" class="fixed bottom-6 left-1/2 transform -translate-x-1/2 flex flex-col gap-3 w-full max-w-sm px-4 z-[9999]"></div>
+
+    <!-- GİRİŞ / KAYIT SEÇİM EKRANI -->
+    <div id="auth-choice-view" class="flex-1 flex items-center justify-center p-4 min-h-screen">
+        <div class="card-panel rounded-3xl w-full max-w-md p-8 sm:p-10 text-center relative overflow-hidden">
+            <div class="bg-indigo-100 dark:bg-indigo-500/20 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-indigo-200 dark:border-indigo-500/30 shadow-lg">
+                <svg class="w-10 h-10 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                </svg>
+            </div>
+            <h1 class="text-3xl font-bold tracking-tight text-slate-800 dark:text-white mb-2">Veresiye Defteri</h1>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">Ortak Bulut / Yerel Havuz Sistemi</p>
+
+            <div class="space-y-4">
+                <button onclick="switchAuthMode('login')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-xl transition-all shadow-lg">
+                    Giriş Yap
+                </button>
+                <button onclick="switchAuthMode('register')" class="w-full bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-800 dark:text-white font-semibold py-4 rounded-xl transition-all">
+                    Kayıt Ol
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- GİRİŞ YAP EKRANI -->
+    <div id="login-view" class="hidden flex-1 flex items-center justify-center p-4 min-h-screen">
+        <div class="card-panel rounded-3xl w-full max-w-md p-8 sm:p-10 relative overflow-hidden">
+            <button onclick="switchAuthMode('choice')" class="mb-6 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center gap-1 text-sm font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Geri
+            </button>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-2">Hesabınıza Giriş Yapın</h2>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Kayıtlı kullanıcı adınız ve 6 haneli şifrenizle giriş yapın.</p>
+
+            <form id="login-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kullanıcı Adı</label>
+                    <input type="text" id="login-username" required class="input-style w-full px-5 py-3.5 rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Şifre (6 Haneli Rakam)</label>
+                    <input type="password" id="login-password" inputmode="numeric" pattern="\d{6}" maxlength="6" required class="input-style w-full px-5 py-3.5 rounded-xl text-center text-lg tracking-[0.5em] font-mono">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-xl transition-all shadow-lg mt-2">
+                    Giriş Yap
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- KAYIT OL EKRANI -->
+    <div id="register-view" class="hidden flex-1 flex items-center justify-center p-4 min-h-screen">
+        <div class="card-panel rounded-3xl w-full max-w-md p-8 sm:p-10 relative overflow-hidden">
+            <button onclick="switchAuthMode('choice')" class="mb-6 text-slate-500 hover:text-slate-800 dark:hover:text-white flex items-center gap-1 text-sm font-medium">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Geri
+            </button>
+            <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-2">Yeni Hesap Oluştur</h2>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Ortak havuz sistemine kaydolun.</p>
+
+            <form id="register-form" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Kullanıcı Adı Belirle</label>
+                    <input type="text" id="reg-username" required class="input-style w-full px-5 py-3.5 rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">6 Haneli Rakam Şifre</label>
+                    <input type="password" id="reg-password" inputmode="numeric" pattern="\d{6}" maxlength="6" required class="input-style w-full px-5 py-3.5 rounded-xl text-center text-lg tracking-[0.5em] font-mono">
+                </div>
+                <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-4 rounded-xl transition-all shadow-lg mt-2">
+                    Kayıt Ol ve Giriş Yap
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- ANA PANEL (DASHBOARD) -->
+    <div id="dashboard-view" class="hidden flex-1 flex-col">
+        <header class="card-panel sticky top-0 z-20 border-t-0 border-l-0 border-r-0 rounded-none mb-6">
+            <div class="max-w-4xl mx-auto px-4 py-4 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-indigo-500/20 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 dark:text-slate-400 text-xs font-medium">Kullanıcı</p>
+                        <h2 id="dash-username" class="text-base font-bold text-slate-800 dark:text-white">...</h2>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="openModal('settings-modal')" class="p-2.5 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 transition-colors" title="Ayarlar">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    </button>
+                    <button onclick="logout()" class="p-2.5 rounded-full hover:bg-rose-50 dark:hover:bg-rose-500/10 text-rose-500 dark:text-rose-400 transition-colors" title="Çıkış Yap">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 max-w-4xl w-full mx-auto px-4">
+            <div class="card-panel rounded-3xl p-8 mb-8 text-center bg-gradient-to-br from-indigo-50 to-white dark:from-transparent dark:to-transparent">
+                <p class="text-indigo-600 dark:text-indigo-300 text-sm font-bold mb-2 uppercase tracking-widest">Toplam Alacak</p>
+                <h3 id="total-balance" class="text-5xl md:text-6xl font-bold text-slate-800 dark:text-white tracking-tight">₺0,00</h3>
+            </div>
+
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
+                    Müşteriler
+                    <span id="customer-count" class="text-xs font-semibold bg-slate-200 dark:bg-white/10 text-slate-700 dark:text-slate-300 px-2.5 py-1 rounded-full">0</span>
+                </h3>
+            </div>
+            
+            <div id="customer-list" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            
+            <div id="empty-state" class="hidden card-panel rounded-3xl text-center py-16 px-6">
+                <div class="w-16 h-16 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg class="w-8 h-8 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+                </div>
+                <p class="text-slate-700 dark:text-slate-300 font-medium text-lg">Kayıtlı müşteri yok.</p>
+                <p class="text-slate-500 text-sm mt-1">Sağ alttaki butondan ekleyebilirsiniz.</p>
+            </div>
+        </main>
+
+        <button onclick="openModal('add-customer-modal')" class="fixed bottom-8 right-8 bg-indigo-600 hover:bg-indigo-500 text-white w-16 h-16 rounded-full shadow-lg flex items-center justify-center transition-transform hover:scale-110 active:scale-95 z-30">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        </button>
+    </div>
+
+    <!-- MÜŞTERİ DETAY SAYFASI -->
+    <div id="customer-view" class="hidden flex-1 flex-col">
+        <header class="card-panel sticky top-0 z-20 border-t-0 border-l-0 border-r-0 rounded-none mb-6">
+            <div class="max-w-4xl mx-auto px-4 py-4 flex items-center gap-4">
+                <button onclick="showDashboard()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-white/10 text-slate-700 dark:text-white transition-colors">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                </button>
+                <div class="flex-1 min-w-0">
+                    <h2 id="detail-customer-name" class="text-xl font-bold text-slate-800 dark:text-white truncate">...</h2>
+                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mt-0.5">Müşteri Hesabı</p>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 max-w-4xl w-full mx-auto px-4">
+            <div class="card-panel rounded-3xl p-8 mb-8 text-center shadow-lg">
+                <p class="text-slate-500 dark:text-slate-300 text-sm font-bold mb-2 uppercase tracking-widest">Güncel Bakiye</p>
+                <h3 id="detail-customer-balance" class="text-5xl font-bold tracking-tight">₺0,00</h3>
+            </div>
+
+            <div class="grid grid-cols-2 gap-4 mb-8">
+                <button onclick="openTransactionModal('sale')" class="card-panel hover:bg-rose-50 dark:hover:bg-rose-500/10 border-rose-200 dark:border-rose-500/30 text-rose-600 dark:text-rose-400 font-semibold py-4 px-2 rounded-2xl flex flex-col items-center gap-2 transition-all">
+                    <div class="bg-rose-100 dark:bg-rose-500/20 p-3 rounded-xl"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></div>
+                    Satış Ekle
+                </button>
+                <button onclick="openTransactionModal('payment')" class="card-panel hover:bg-emerald-50 dark:hover:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-semibold py-4 px-2 rounded-2xl flex flex-col items-center gap-2 transition-all">
+                    <div class="bg-emerald-100 dark:bg-emerald-500/20 p-3 rounded-xl"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path></svg></div>
+                    Ödeme Al
+                </button>
+            </div>
+
+            <div>
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-4 flex items-center gap-2">İşlem Geçmişi</h3>
+                <div id="transaction-list" class="space-y-3"></div>
+                <div id="tx-empty-state" class="hidden card-panel rounded-2xl text-center py-10 border-dashed">
+                    <p class="text-slate-500 dark:text-slate-400 text-sm">Henüz bir işlem yok.</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODALLAR -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/60 dark:bg-slate-900/80 backdrop-blur-sm z-40 hidden transition-opacity opacity-0 duration-300"></div>
+
+    <!-- Ayarlar Modal -->
+    <div id="settings-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="card-panel rounded-3xl w-full max-w-md overflow-hidden transform transition-all modal-enter max-h-[90vh] flex flex-col" id="settings-content">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-white/5 shrink-0">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white">Ayarlar</h3>
+                <button onclick="closeModal('settings-modal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            <div class="p-6 space-y-6 overflow-y-auto">
+                <!-- Tema -->
+                <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10">
+                    <div>
+                        <p class="font-medium text-slate-800 dark:text-white">Karanlık Mod (Glassmorphism)</p>
+                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Cam efektli şık tema</p>
+                    </div>
+                    <label class="relative inline-flex items-center cursor-pointer">
+                        <input type="checkbox" id="theme-toggle" class="sr-only peer">
+                        <div class="w-11 h-6 bg-slate-300 peer-focus:outline-none rounded-full peer dark:bg-slate-600 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-indigo-600"></div>
+                    </label>
+                </div>
+
+                <!-- Kullanıcı Adı Değiştirme -->
+                <div>
+                    <h4 class="font-bold text-slate-800 dark:text-white mb-1">Kullanıcı Adı Değiştir</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Ayda sadece 1 defa değiştirilebilir.</p>
+                    <form id="change-username-form" class="space-y-3">
+                        <input type="text" id="new-username-input" required placeholder="Yeni Kullanıcı Adı" class="input-style w-full px-4 py-2.5 rounded-xl text-sm">
+                        <button type="submit" class="w-full bg-slate-800 dark:bg-white/10 hover:bg-slate-700 text-white font-medium py-2.5 rounded-xl text-sm transition-all">Kullanıcı Adını Güncelle</button>
+                    </form>
+                </div>
+
+                <!-- Şifre Değiştirme -->
+                <div class="pt-2">
+                    <h4 class="font-bold text-slate-800 dark:text-white mb-1">Şifre Değiştir</h4>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">6 haneli rakam olmalıdır.</p>
+                    <form id="change-password-form" class="space-y-3">
+                        <input type="password" id="new-password-input" inputmode="numeric" pattern="\d{6}" maxlength="6" required placeholder="Yeni 6 Haneli Şifre" class="input-style w-full px-4 py-2.5 rounded-xl text-center text-lg tracking-widest font-mono">
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2.5 rounded-xl text-sm transition-all">Şifreyi Güncelle</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Müşteri Ekle Modal -->
+    <div id="add-customer-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="card-panel rounded-3xl w-full max-w-sm overflow-hidden transform transition-all modal-enter" id="add-customer-content">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-white/5">
+                <h3 class="text-lg font-bold text-slate-800 dark:text-white">Yeni Müşteri Ekle</h3>
+                <button onclick="closeModal('add-customer-modal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            <form id="add-customer-form" class="p-6 space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Müşteri Adı Soyadı</label>
+                    <input type="text" id="new-customer-name" required class="input-style w-full px-4 py-3 rounded-xl">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3.5 rounded-xl transition-all shadow-md mt-2">
+                    Kaydet
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- İşlem Ekle Modal -->
+    <div id="transaction-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="card-panel rounded-3xl w-full max-w-md overflow-hidden transform transition-all modal-enter max-h-[90vh] flex flex-col" id="transaction-content">
+            <div class="px-6 py-4 border-b border-slate-200 dark:border-white/10 flex justify-between items-center bg-slate-50 dark:bg-white/5 shrink-0">
+                <h3 id="tx-modal-title" class="text-lg font-bold text-slate-800 dark:text-white">İşlem</h3>
+                <button onclick="closeModal('transaction-modal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+            </div>
+            
+            <form id="transaction-form" class="p-6 space-y-4 overflow-y-auto">
+                <input type="hidden" id="tx-type" value="sale">
+
+                <!-- Satış Alanları -->
+                <div id="sale-fields" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Malın Cinsi <span class="text-rose-500">*</span></label>
+                        <input type="text" id="tx-item" class="input-style w-full px-4 py-2.5 rounded-xl">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Miktar <span class="text-rose-500">*</span></label>
+                            <input type="number" id="tx-qty" min="0.01" step="0.01" class="input-style w-full px-4 py-2.5 rounded-xl text-center">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Birim Fiyat <span class="text-rose-500">*</span></label>
+                            <input type="number" id="tx-price" min="0.01" step="0.01" class="input-style w-full px-4 py-2.5 rounded-xl text-center">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ödeme Türü -->
+                <div id="payment-fields" class="hidden">
+                     <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Ödeme Seçeneği</label>
+                     <select id="tx-payment-type" class="input-style w-full px-4 py-2.5 rounded-xl">
+                         <option value="Nakit">Elden Nakit Ödeme</option>
+                         <option value="Havale">Havale / EFT</option>
+                     </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Toplam Tutar (₺) <span class="text-indigo-500">*</span></label>
+                    <input type="number" id="tx-total" required min="0.01" step="0.01" class="input-style w-full px-4 py-3 rounded-xl text-center text-xl font-bold">
+                    <p id="tx-calc-hint" class="text-xs text-slate-500 mt-1 text-center hidden">Tutar otomatik hesaplandı, dilerseniz değiştirebilirsiniz.</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Tarih <span class="text-indigo-500">*</span></label>
+                    <input type="date" id="tx-date" required class="input-style w-full px-4 py-2.5 rounded-xl">
+                </div>
+                
+                <div id="location-field">
+                    <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Gittiği Yer <span class="text-slate-400 text-xs">(Zorunlu değil)</span></label>
+                    <input type="text" id="tx-location" class="input-style w-full px-4 py-2.5 rounded-xl">
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="tx-submit-btn" class="w-full text-white font-bold py-3.5 rounded-xl transition-all shadow-md text-lg"></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ONAY MODALI (Silme işlemleri için genel modal) -->
+    <div id="confirm-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="card-panel rounded-3xl w-full max-w-sm p-6 text-center transform transition-all modal-enter" id="confirm-content">
+            <div class="w-12 h-12 bg-rose-100 dark:bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+            </div>
+            <h3 id="confirm-title" class="text-lg font-bold text-slate-800 dark:text-white mb-2">Silme Onayı</h3>
+            <p id="confirm-text" class="text-sm text-slate-500 dark:text-slate-400 mb-6">Bu öğeyi silmek istediğinizden emin misiniz?</p>
+            <div class="grid grid-cols-2 gap-3">
+                <button id="confirm-cancel-btn" class="bg-slate-200 dark:bg-white/10 hover:bg-slate-300 text-slate-800 dark:text-white font-semibold py-3 rounded-xl transition-all">İptal</button>
+                <button id="confirm-yes-btn" class="bg-rose-600 hover:bg-rose-700 text-white font-semibold py-3 rounded-xl transition-all shadow-md">Sil</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Veritabanı Yapısı (Ortak Bulut / Yerel Havuz)
+        let appData = JSON.parse(localStorage.getItem('veresiye_shared_pool')) || { users: {} };
+        let currentUser = null;
+        let currentCustomerId = null;
+
+        const currencyFmt = new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY' });
+        const dateFmt = new Intl.DateTimeFormat('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+        const views = ['auth-choice-view', 'login-view', 'register-view', 'dashboard-view', 'customer-view'].map(id => document.getElementById(id));
+        const themeToggle = document.getElementById('theme-toggle');
+
+        window.onload = () => {
+            const savedTheme = localStorage.getItem('veresiye_theme') || 'light';
+            if(savedTheme === 'dark') {
+                document.documentElement.classList.add('dark');
+                themeToggle.checked = true;
+            } else {
+                document.documentElement.classList.remove('dark');
+                themeToggle.checked = false;
+            }
+            document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+        };
+
+        themeToggle.addEventListener('change', (e) => {
+            if(e.target.checked) {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('veresiye_theme', 'dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('veresiye_theme', 'light');
+            }
+        });
+
+        function saveData() {
+            localStorage.setItem('veresiye_shared_pool', JSON.stringify(appData));
+        }
+
+        function switchView(viewId) {
+            views.forEach(v => v.classList.add('hidden'));
+            document.getElementById(viewId).classList.remove('hidden');
+            window.scrollTo(0, 0);
+        }
+
+        window.switchAuthMode = (mode) => {
+            if(mode === 'choice') switchView('auth-choice-view');
+            else if(mode === 'login') switchView('login-view');
+            else if(mode === 'register') switchView('register-view');
+        };
+
+        window.showDashboard = () => {
+            if (!currentUser) return;
+            document.getElementById('dash-username').textContent = currentUser;
+            currentCustomerId = null;
+            renderDashboard();
+            switchView('dashboard-view');
+        };
+
+        window.showCustomerDetail = (id) => {
+            currentCustomerId = id;
+            const customer = appData.users[currentUser].customers.find(c => c.id === id);
+            if (!customer) return;
+            document.getElementById('detail-customer-name').textContent = customer.name;
+            renderCustomerDetail();
+            switchView('customer-view');
+        };
+
+        // --- AUTH: GİRİŞ VE KAYIT ---
+        document.getElementById('register-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const uname = document.getElementById('reg-username').value.trim();
+            const pin = document.getElementById('reg-password').value;
+
+            if(pin.length !== 6) return showToast("Şifre 6 haneli rakam olmalıdır.", "error");
+
+            if(appData.users[uname]) {
+                return showToast("Bu kullanıcı adı zaten alınmış! Giriş yapmayı deneyin.", "error");
+            }
+
+            appData.users[uname] = {
+                pin: pin,
+                lastUsernameChange: null,
+                customers: [],
+                transactions: []
+            };
+            saveData();
+
+            currentUser = uname;
+            document.getElementById('register-form').reset();
+            showDashboard();
+            showToast("Kayıt başarılı, hoş geldiniz!", "success");
+        });
+
+        document.getElementById('login-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const uname = document.getElementById('login-username').value.trim();
+            const pin = document.getElementById('login-password').value;
+
+            if(!appData.users[uname]) {
+                return showToast("Hesap bulunamadı! Önce kayıt olmalısınız.", "error");
+            }
+
+            if(appData.users[uname].pin !== pin) {
+                return showToast("Hatalı şifre!", "error");
+            }
+
+            currentUser = uname;
+            document.getElementById('login-form').reset();
+            showDashboard();
+            showToast(`Hoş geldiniz, ${uname}`, "success");
+        });
+
+        window.logout = () => {
+            currentUser = null;
+            switchView('auth-choice-view');
+        };
+
+        // --- HESAPLAMA ---
+        function getCustomerBalance(customerId) {
+            const txs = appData.users[currentUser].transactions.filter(t => t.customerId === customerId);
+            return txs.reduce((sum, tx) => sum + (tx.type === 'sale' ? tx.amount : -tx.amount), 0);
+        }
+
+        function getTotalBalance() {
+            return appData.users[currentUser].customers.reduce((sum, c) => sum + getCustomerBalance(c.id), 0);
+        }
+
+        // --- RENDER ---
+        function renderDashboard() {
+            const total = getTotalBalance();
+            document.getElementById('total-balance').textContent = currencyFmt.format(total);
+            
+            const customers = appData.users[currentUser].customers.sort((a,b) => a.name.localeCompare(b.name));
+            document.getElementById('customer-count').textContent = customers.length;
+            
+            const list = document.getElementById('customer-list');
+            const empty = document.getElementById('empty-state');
+            list.innerHTML = '';
+            
+            if(customers.length === 0) {
+                empty.classList.remove('hidden');
+            } else {
+                empty.classList.add('hidden');
+                customers.forEach(c => {
+                    const bal = getCustomerBalance(c.id);
+                    const color = bal > 0 ? 'text-rose-500 dark:text-rose-400' : (bal < 0 ? 'text-emerald-500 dark:text-emerald-400' : 'text-slate-500');
+                    
+                    list.innerHTML += `
+                        <div class="card-panel p-4 rounded-2xl flex justify-between items-center hover:border-indigo-300 dark:hover:border-indigo-500/50">
+                            <div onclick="showCustomerDetail('${c.id}')" class="flex items-center gap-3 flex-1 cursor-pointer min-w-0">
+                                <div class="w-10 h-10 rounded-full bg-indigo-100 dark:bg-white/5 flex items-center justify-center font-bold text-indigo-700 dark:text-slate-300 shrink-0">
+                                    ${c.name.charAt(0).toUpperCase()}
+                                </div>
+                                <div class="min-w-0">
+                                    <h4 class="font-bold text-slate-800 dark:text-white truncate">${c.name}</h4>
+                                    <span class="text-xs font-bold ${color}">${currencyFmt.format(bal)}</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 shrink-0">
+                                <div onclick="showCustomerDetail('${c.id}')" class="cursor-pointer text-right pr-2">
+                                    <span class="block text-[10px] uppercase font-bold tracking-wider text-slate-400">${bal > 0 ? 'Borç' : (bal < 0 ? 'Alacak' : 'Temiz')}</span>
+                                </div>
+                                <button onclick="confirmDeleteCustomer('${c.id}', '${c.name.replace(/'/g, "\\'")}')" class="p-2.5 rounded-xl bg-rose-50 dark:bg-rose-500/10 text-rose-500 hover:bg-rose-100 transition-colors" title="Müşteriyi Sil">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        </div>`;
+                });
+            }
+        }
+
+        function renderCustomerDetail() {
+            const bal = getCustomerBalance(currentCustomerId);
+            const balEl = document.getElementById('detail-customer-balance');
+            balEl.textContent = currencyFmt.format(bal);
+            balEl.className = `text-5xl font-bold tracking-tight ${bal > 0 ? 'text-rose-600 dark:text-rose-400' : (bal < 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-800 dark:text-white')}`;
+            
+            const txs = appData.users[currentUser].transactions
+                .filter(t => t.customerId === currentCustomerId)
+                .sort((a,b) => new Date(b.date) - new Date(a.date) || b.id - a.id);
+                
+            const list = document.getElementById('transaction-list');
+            const empty = document.getElementById('tx-empty-state');
+            list.innerHTML = '';
+            
+            if(txs.length === 0) {
+                empty.classList.remove('hidden');
+                list.classList.add('hidden');
+            } else {
+                empty.classList.add('hidden');
+                list.classList.remove('hidden');
+                
+                txs.forEach(tx => {
+                    const isSale = tx.type === 'sale';
+                    const bg = isSale ? 'bg-rose-50 dark:bg-rose-500/10 border-rose-100 dark:border-rose-500/20' : 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20';
+                    const color = isSale ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400';
+                    
+                    let details = isSale 
+                        ? `<p class="font-bold text-slate-800 dark:text-white text-base">${tx.item}</p><p class="text-xs text-slate-500 dark:text-slate-400">Miktar: ${tx.qty} ${tx.price ? `x ₺${tx.price}` : ''} ${tx.location ? ` | Yer: ${tx.location}` : ''}</p>`
+                        : `<p class="font-bold text-slate-800 dark:text-white text-base">Ödeme Alındı</p><p class="text-xs text-slate-500 dark:text-slate-400">Tür: ${tx.paymentType}</p>`;
+
+                    list.innerHTML += `
+                        <div class="card-panel p-4 rounded-2xl flex justify-between items-center ${bg}">
+                            <div class="min-w-0 pr-2">
+                                ${details}
+                                <span class="block text-[11px] font-medium text-slate-400 mt-1">${dateFmt.format(new Date(tx.date))}</span>
+                            </div>
+                            <div class="flex items-center gap-3 shrink-0">
+                                <span class="text-lg font-bold ${color}">${isSale ? '+' : '-'}${currencyFmt.format(tx.amount)}</span>
+                                <button onclick="confirmDeleteTransaction(${tx.id})" class="p-2 rounded-xl bg-white/50 dark:bg-white/10 text-rose-500 hover:bg-rose-100 transition-colors" title="İşlemi Sil">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                                </button>
+                            </div>
+                        </div>`;
+                });
+            }
+        }
+
+        // --- MODAL YÖNETİMİ & ONAYLAR ---
+        const backdrop = document.getElementById('modal-backdrop');
+
+        window.openModal = (id) => {
+            const modal = document.getElementById(id);
+            const content = modal.querySelector('div[id$="-content"]');
+            backdrop.classList.remove('hidden');
+            setTimeout(() => backdrop.classList.remove('opacity-0'), 10);
+            modal.classList.remove('hidden');
+            content.classList.remove('modal-exit-active');
+            content.classList.add('modal-enter');
+            requestAnimationFrame(() => content.classList.add('modal-enter-active'));
+        };
+
+        window.closeModal = (id) => {
+            const modal = document.getElementById(id);
+            const content = modal.querySelector('div[id$="-content"]');
+            content.classList.remove('modal-enter', 'modal-enter-active');
+            content.classList.add('modal-exit-active');
+            backdrop.classList.add('opacity-0');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                backdrop.classList.add('hidden');
+                const form = modal.querySelector('form');
+                if(form) form.reset();
+                if(document.getElementById('tx-date')) document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+                if(document.getElementById('tx-calc-hint')) document.getElementById('tx-calc-hint').classList.add('hidden');
+            }, 200);
+        };
+
+        // Özelleştirilmiş Onay Modalı
+        function showConfirm(title, text, onConfirm) {
+            document.getElementById('confirm-title').textContent = title;
+            document.getElementById('confirm-text').textContent = text;
+            
+            const yesBtn = document.getElementById('confirm-yes-btn');
+            const cancelBtn = document.getElementById('confirm-cancel-btn');
+            
+            const newYes = yesBtn.cloneNode(true);
+            const newCancel = cancelBtn.cloneNode(true);
+            yesBtn.parentNode.replaceChild(newYes, yesBtn);
+            cancelBtn.parentNode.replaceChild(newCancel, cancelBtn);
+            
+            newYes.addEventListener('click', () => {
+                closeModal('confirm-modal');
+                onConfirm();
+            });
+            newCancel.addEventListener('click', () => closeModal('confirm-modal'));
+            
+            openModal('confirm-modal');
+        }
+
+        window.confirmDeleteCustomer = (custId, custName) => {
+            showConfirm("Müşteriyi Sil", `"${custName}" adlı müşteriyi ve tüm geçmişini silmek istiyor musunuz?`, () => {
+                appData.users[currentUser].customers = appData.users[currentUser].customers.filter(c => c.id !== custId);
+                appData.users[currentUser].transactions = appData.users[currentUser].transactions.filter(t => t.customerId !== custId);
+                saveData();
+                renderDashboard();
+                showToast("Müşteri silindi.", "success");
+            });
+        };
+
+        window.confirmDeleteTransaction = (txId) => {
+            showConfirm("İşlemi Sil", "Bu hatalı işlemi silmek istiyor musunuz?", () => {
+                appData.users[currentUser].transactions = appData.users[currentUser].transactions.filter(t => t.id !== txId);
+                saveData();
+                renderCustomerDetail();
+                showToast("İşlem silindi.", "success");
+            });
+        };
+
+        // --- İŞLEM MODALI ---
+        window.openTransactionModal = (type) => {
+            document.getElementById('tx-type').value = type;
+            const isSale = type === 'sale';
+            
+            document.getElementById('tx-modal-title').textContent = isSale ? 'Satış / Borç Ekle' : 'Tahsilat / Ödeme Al';
+            
+            const btn = document.getElementById('tx-submit-btn');
+            btn.className = `w-full text-white font-bold py-3.5 rounded-xl transition-all shadow-md text-lg ${isSale ? 'bg-rose-600 hover:bg-rose-700' : 'bg-emerald-600 hover:bg-emerald-700'}`;
+            btn.textContent = isSale ? 'Borca Ekle' : 'Hesaptan Düş';
+            
+            document.getElementById('sale-fields').style.display = isSale ? 'block' : 'none';
+            document.getElementById('location-field').style.display = isSale ? 'block' : 'none';
+            document.getElementById('payment-fields').style.display = isSale ? 'none' : 'block';
+            
+            document.querySelectorAll('#sale-fields input').forEach(inp => inp.required = isSale);
+            
+            window.openModal('transaction-modal');
+        };
+
+        // Otomatik Tutar Hesaplama (Adet/Miktar * Birim Fiyat)
+        const calcTotal = () => {
+            if(document.getElementById('tx-type').value !== 'sale') return;
+            const q = parseFloat(document.getElementById('tx-qty').value) || 0;
+            const p = parseFloat(document.getElementById('tx-price').value) || 0;
+            if(q > 0 && p > 0) {
+                document.getElementById('tx-total').value = (q * p).toFixed(2);
+                document.getElementById('tx-calc-hint').classList.remove('hidden');
+            }
+        };
+        document.getElementById('tx-qty').addEventListener('input', calcTotal);
+        document.getElementById('tx-price').addEventListener('input', calcTotal);
+
+        // --- FORM İŞLEMLERİ ---
+        document.getElementById('add-customer-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const name = document.getElementById('new-customer-name').value.trim();
+            if(name) {
+                appData.users[currentUser].customers.push({ id: Date.now().toString(), name });
+                saveData();
+                closeModal('add-customer-modal');
+                renderDashboard();
+                showToast('Müşteri eklendi', 'success');
+            }
+        });
+
+        document.getElementById('transaction-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const isSale = document.getElementById('tx-type').value === 'sale';
+            const amount = parseFloat(document.getElementById('tx-total').value);
+            
+            if(amount > 0) {
+                const tx = {
+                    id: Date.now(),
+                    customerId: currentCustomerId,
+                    type: isSale ? 'sale' : 'payment',
+                    amount: amount,
+                    date: document.getElementById('tx-date').value
+                };
+
+                if(isSale) {
+                    tx.item = document.getElementById('tx-item').value;
+                    tx.qty = parseFloat(document.getElementById('tx-qty').value);
+                    tx.price = parseFloat(document.getElementById('tx-price').value);
+                    tx.location = document.getElementById('tx-location').value;
+                } else {
+                    tx.paymentType = document.getElementById('tx-payment-type').value;
+                }
+
+                appData.users[currentUser].transactions.push(tx);
+                saveData();
+                closeModal('transaction-modal');
+                renderCustomerDetail();
+                showToast('İşlem kaydedildi', 'success');
+            }
+        });
+
+        // --- AYARLAR: KULLANICI ADI VE ŞİFRE DEĞİŞTİRME ---
+        document.getElementById('change-username-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newName = document.getElementById('new-username-input').value.trim();
+            if(!newName) return;
+
+            if(appData.users[newName]) {
+                return showToast("Bu kullanıcı adı zaten kullanımda!", "error");
+            }
+
+            const userData = appData.users[currentUser];
+            const now = new Date().getTime();
+            const oneMonth = 30 * 24 * 60 * 60 * 1000;
+
+            if(userData.lastUsernameChange && (now - userData.lastUsernameChange < oneMonth)) {
+                return showToast("Kullanıcı adı ayda sadece 1 defa değiştirilebilir!", "error");
+            }
+
+            userData.lastUsernameChange = now;
+            appData.users[newName] = userData;
+            delete appData.users[currentUser];
+            currentUser = newName;
+            saveData();
+
+            document.getElementById('dash-username').textContent = currentUser;
+            document.getElementById('change-username-form').reset();
+            showToast("Kullanıcı adı başarıyla değiştirildi.", "success");
+        });
+
+        document.getElementById('change-password-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const newPin = document.getElementById('new-password-input').value;
+
+            if(newPin.length !== 6) {
+                return showToast("Şifre 6 haneli rakam olmalıdır.", "error");
+            }
+
+            appData.users[currentUser].pin = newPin;
+            saveData();
+            document.getElementById('change-password-form').reset();
+            showToast("Şifreniz güncellendi.", "success");
+        });
+
+        // Toast Bildirim Sistemi
+        window.showToast = (msg, type = 'info') => {
+            const box = document.createElement('div');
+            const bg = type === 'error' ? 'bg-rose-500' : 'bg-emerald-500';
+            box.className = `flex items-center gap-2 px-5 py-3 rounded-xl text-white font-medium shadow-lg toast-enter ${bg}`;
+            box.innerHTML = `<span>${msg}</span>`;
+            document.getElementById('toast-container').appendChild(box);
+            
+            requestAnimationFrame(() => box.classList.add('toast-enter-active'));
+            setTimeout(() => {
+                box.style.opacity = '0';
+                box.style.transform = 'translateY(10px)';
+                setTimeout(() => box.remove(), 300);
+            }, 2500);
+        };
+    </script>
+</body>
+</html>
