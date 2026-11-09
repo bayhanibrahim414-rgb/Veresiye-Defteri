@@ -15,10 +15,38 @@
             }
         }
     </script>
+    <!-- Firebase SDK (Modüler) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-analytics.js";
+        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyC-kFC4TCaxY7aU0tBZF-rvPYVYTI8jcIU",
+            authDomain: "veresiyedefteri-68308.firebaseapp.com",
+            databaseURL: "https://veresiyedefteri-68308-default-rtdb.firebaseio.com",
+            projectId: "veresiyedefteri-68308",
+            storageBucket: "veresiyedefteri-68308.firebasestorage.app",
+            messagingSenderId: "587738728459",
+            appId: "1:587738728459:web:1c68eccc42bb0fb3f51f0e",
+            measurementId: "G-671DS3MJ0Q"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getDatabase(app);
+
+        // Firebase fonksiyonlarını global alana aktarıyoruz
+        window.firebaseDb = db;
+        window.firebaseRef = ref;
+        window.firebaseSet = set;
+        window.firebaseGet = get;
+
+        window.dispatchEvent(new Event('firebase-ready'));
+    </script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         
-        /* Ekranın sağa sola kaymasını ve metin seçilmesini engelle (Mobil uygulama hissi) */
         * {
             box-sizing: border-box;
             user-select: none;
@@ -27,7 +55,6 @@
             touch-action: manipulation;
         }
 
-        /* Input alanlarında yazı seçimine izin ver */
         input, textarea, select {
             user-select: text;
             -webkit-user-select: text;
@@ -68,7 +95,6 @@
             outline: none;
         }
 
-        /* KARANLIK MOD (Glassmorphism) */
         html.dark body {
             background-color: #0f172a;
             background-image: 
@@ -122,7 +148,7 @@
                 </svg>
             </div>
             <h1 class="text-3xl font-bold tracking-tight text-slate-800 dark:text-white mb-2">Veresiye Defteri</h1>
-            <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">Ortak Bulut / Yerel Havuz Sistemi</p>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-8">Ortak Bulut / Firebase Sistemi</p>
 
             <div class="space-y-4">
                 <button onclick="switchAuthMode('login')" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-4 rounded-xl transition-all shadow-lg">
@@ -167,7 +193,7 @@
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg> Geri
             </button>
             <h2 class="text-2xl font-bold text-slate-800 dark:text-white mb-2">Yeni Hesap Oluştur</h2>
-            <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Ortak havuz sistemine kaydolun.</p>
+            <p class="text-slate-500 dark:text-slate-400 text-sm mb-6">Bulut tabanlı ortak sisteme kaydolun.</p>
 
             <form id="register-form" class="space-y-5">
                 <div>
@@ -290,7 +316,6 @@
                 <button onclick="closeModal('settings-modal')" class="text-slate-400 hover:text-slate-600 dark:hover:text-white"><svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
             </div>
             <div class="p-6 space-y-6 overflow-y-auto">
-                <!-- Tema -->
                 <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10">
                     <div>
                         <p class="font-medium text-slate-800 dark:text-white">Karanlık Mod (Glassmorphism)</p>
@@ -302,7 +327,6 @@
                     </label>
                 </div>
 
-                <!-- Kullanıcı Adı Değiştirme -->
                 <div>
                     <h4 class="font-bold text-slate-800 dark:text-white mb-1">Kullanıcı Adı Değiştir</h4>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">Ayda sadece 1 defa değiştirilebilir.</p>
@@ -312,7 +336,6 @@
                     </form>
                 </div>
 
-                <!-- Şifre Değiştirme -->
                 <div class="pt-2">
                     <h4 class="font-bold text-slate-800 dark:text-white mb-1">Şifre Değiştir</h4>
                     <p class="text-xs text-slate-500 dark:text-slate-400 mb-3">6 haneli rakam olmalıdır.</p>
@@ -355,7 +378,6 @@
             <form id="transaction-form" class="p-6 space-y-4 overflow-y-auto">
                 <input type="hidden" id="tx-type" value="sale">
 
-                <!-- Satış Alanları -->
                 <div id="sale-fields" class="space-y-4">
                     <div>
                         <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Malın Cinsi <span class="text-rose-500">*</span></label>
@@ -373,7 +395,6 @@
                     </div>
                 </div>
 
-                <!-- Ödeme Türü -->
                 <div id="payment-fields" class="hidden">
                      <label class="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Ödeme Seçeneği</label>
                      <select id="tx-payment-type" class="input-style w-full px-4 py-2.5 rounded-xl">
@@ -405,7 +426,7 @@
         </div>
     </div>
 
-    <!-- ONAY MODALI (Silme işlemleri için genel modal) -->
+    <!-- ONAY MODALI -->
     <div id="confirm-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
         <div class="card-panel rounded-3xl w-full max-w-sm p-6 text-center transform transition-all modal-enter" id="confirm-content">
             <div class="w-12 h-12 bg-rose-100 dark:bg-rose-500/20 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -421,8 +442,7 @@
     </div>
 
     <script>
-        // Veritabanı Yapısı (Ortak Bulut / Yerel Havuz)
-        let appData = JSON.parse(localStorage.getItem('veresiye_shared_pool')) || { users: {} };
+        let appData = { users: {} };
         let currentUser = null;
         let currentCustomerId = null;
 
@@ -432,7 +452,8 @@
         const views = ['auth-choice-view', 'login-view', 'register-view', 'dashboard-view', 'customer-view'].map(id => document.getElementById(id));
         const themeToggle = document.getElementById('theme-toggle');
 
-        window.onload = () => {
+        // Firebase'den veri çekme ve başlatma
+        window.onload = async () => {
             const savedTheme = localStorage.getItem('veresiye_theme') || 'light';
             if(savedTheme === 'dark') {
                 document.documentElement.classList.add('dark');
@@ -442,7 +463,34 @@
                 themeToggle.checked = false;
             }
             document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
+
+            // Önce yerel önbellekten yükle
+            appData = JSON.parse(localStorage.getItem('veresiye_shared_pool')) || { users: {} };
+
+            // Firebase hazır olduğunda veritabanından güncel veriyi çek
+            if (window.firebaseDb) {
+                await loadFromFirebase();
+            } else {
+                window.addEventListener('firebase-ready', async () => {
+                    await loadFromFirebase();
+                });
+            }
         };
+
+        async function loadFromFirebase() {
+            try {
+                const dbRef = window.firebaseRef(window.firebaseDb, 'veresiye_pool');
+                const snapshot = await window.firebaseGet(dbRef);
+                if (snapshot.exists()) {
+                    appData = snapshot.val() || { users: {} };
+                    localStorage.setItem('veresiye_shared_pool', JSON.stringify(appData));
+                } else if (Object.keys(appData.users).length > 0) {
+                    await window.firebaseSet(dbRef, appData);
+                }
+            } catch (err) {
+                console.error("Firebase'den veri okunurken hata oluştu, yerel veriler kullanılıyor:", err);
+            }
+        }
 
         themeToggle.addEventListener('change', (e) => {
             if(e.target.checked) {
@@ -454,8 +502,17 @@
             }
         });
 
-        function saveData() {
+        // Veriyi hem localStorage'a hem de Firebase'e kaydet
+        async function saveData() {
             localStorage.setItem('veresiye_shared_pool', JSON.stringify(appData));
+            if (window.firebaseDb && window.firebaseRef && window.firebaseSet) {
+                try {
+                    const dbRef = window.firebaseRef(window.firebaseDb, 'veresiye_pool');
+                    await window.firebaseSet(dbRef, appData);
+                } catch (err) {
+                    console.error("Firebase'e kayıt yapılamadı:", err);
+                }
+            }
         }
 
         function switchView(viewId) {
@@ -488,7 +545,7 @@
         };
 
         // --- AUTH: GİRİŞ VE KAYIT ---
-        document.getElementById('register-form').addEventListener('submit', (e) => {
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const uname = document.getElementById('reg-username').value.trim();
             const pin = document.getElementById('reg-password').value;
@@ -505,12 +562,12 @@
                 customers: [],
                 transactions: []
             };
-            saveData();
+            await saveData();
 
             currentUser = uname;
             document.getElementById('register-form').reset();
             showDashboard();
-            showToast("Kayıt başarılı, hoş geldiniz!", "success");
+            showToast("Kayıt başarılı, buluta kaydedildi!", "success");
         });
 
         document.getElementById('login-form').addEventListener('submit', (e) => {
@@ -668,7 +725,6 @@
             }, 200);
         };
 
-        // Özelleştirilmiş Onay Modalı
         function showConfirm(title, text, onConfirm) {
             document.getElementById('confirm-title').textContent = title;
             document.getElementById('confirm-text').textContent = text;
@@ -691,19 +747,19 @@
         }
 
         window.confirmDeleteCustomer = (custId, custName) => {
-            showConfirm("Müşteriyi Sil", `"${custName}" adlı müşteriyi ve tüm geçmişini silmek istiyor musunuz?`, () => {
+            showConfirm("Müşteriyi Sil", `"${custName}" adlı müşteriyi ve tüm geçmişini silmek istiyor musunuz?`, async () => {
                 appData.users[currentUser].customers = appData.users[currentUser].customers.filter(c => c.id !== custId);
                 appData.users[currentUser].transactions = appData.users[currentUser].transactions.filter(t => t.customerId !== custId);
-                saveData();
+                await saveData();
                 renderDashboard();
                 showToast("Müşteri silindi.", "success");
             });
         };
 
         window.confirmDeleteTransaction = (txId) => {
-            showConfirm("İşlemi Sil", "Bu hatalı işlemi silmek istiyor musunuz?", () => {
+            showConfirm("İşlemi Sil", "Bu hatalı işlemi silmek istiyor musunuz?", async () => {
                 appData.users[currentUser].transactions = appData.users[currentUser].transactions.filter(t => t.id !== txId);
-                saveData();
+                await saveData();
                 renderCustomerDetail();
                 showToast("İşlem silindi.", "success");
             });
@@ -729,7 +785,6 @@
             window.openModal('transaction-modal');
         };
 
-        // Otomatik Tutar Hesaplama (Adet/Miktar * Birim Fiyat)
         const calcTotal = () => {
             if(document.getElementById('tx-type').value !== 'sale') return;
             const q = parseFloat(document.getElementById('tx-qty').value) || 0;
@@ -743,19 +798,19 @@
         document.getElementById('tx-price').addEventListener('input', calcTotal);
 
         // --- FORM İŞLEMLERİ ---
-        document.getElementById('add-customer-form').addEventListener('submit', (e) => {
+        document.getElementById('add-customer-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const name = document.getElementById('new-customer-name').value.trim();
             if(name) {
                 appData.users[currentUser].customers.push({ id: Date.now().toString(), name });
-                saveData();
+                await saveData();
                 closeModal('add-customer-modal');
                 renderDashboard();
                 showToast('Müşteri eklendi', 'success');
             }
         });
 
-        document.getElementById('transaction-form').addEventListener('submit', (e) => {
+        document.getElementById('transaction-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const isSale = document.getElementById('tx-type').value === 'sale';
             const amount = parseFloat(document.getElementById('tx-total').value);
@@ -779,15 +834,15 @@
                 }
 
                 appData.users[currentUser].transactions.push(tx);
-                saveData();
+                await saveData();
                 closeModal('transaction-modal');
                 renderCustomerDetail();
                 showToast('İşlem kaydedildi', 'success');
             }
         });
 
-        // --- AYARLAR: KULLANICI ADI VE ŞİFRE DEĞİŞTİRME ---
-        document.getElementById('change-username-form').addEventListener('submit', (e) => {
+        // --- AYARLAR ---
+        document.getElementById('change-username-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const newName = document.getElementById('new-username-input').value.trim();
             if(!newName) return;
@@ -808,14 +863,14 @@
             appData.users[newName] = userData;
             delete appData.users[currentUser];
             currentUser = newName;
-            saveData();
+            await saveData();
 
             document.getElementById('dash-username').textContent = currentUser;
             document.getElementById('change-username-form').reset();
             showToast("Kullanıcı adı başarıyla değiştirildi.", "success");
         });
 
-        document.getElementById('change-password-form').addEventListener('submit', (e) => {
+        document.getElementById('change-password-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const newPin = document.getElementById('new-password-input').value;
 
@@ -824,12 +879,11 @@
             }
 
             appData.users[currentUser].pin = newPin;
-            saveData();
+            await saveData();
             document.getElementById('change-password-form').reset();
             showToast("Şifreniz güncellendi.", "success");
         });
 
-        // Toast Bildirim Sistemi
         window.showToast = (msg, type = 'info') => {
             const box = document.createElement('div');
             const bg = type === 'error' ? 'bg-rose-500' : 'bg-emerald-500';
