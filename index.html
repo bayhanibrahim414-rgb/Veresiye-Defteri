@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Gelişmiş Veresiye Defteri</title>
+    
+    <!-- Özel Şık Uygulama Simgesi (Favicon) -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'><path d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z'/></svg>">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -19,7 +23,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-analytics.js";
-        import { getDatabase, ref, set, get } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-database.js";
+        import { getDatabase, ref, set, get, onValue } from "https://www.gstatic.com/firebasejs/13.2.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyC-kFC4TCaxY7aU0tBZF-rvPYVYTI8jcIU",
@@ -40,6 +44,7 @@
         window.firebaseRef = ref;
         window.firebaseSet = set;
         window.firebaseGet = get;
+        window.firebaseOnValue = onValue;
 
         window.dispatchEvent(new Event('firebase-ready'));
     </script>
@@ -141,8 +146,9 @@
     <div id="auth-choice-view" class="flex-1 flex items-center justify-center p-4 min-h-screen">
         <div class="card-panel rounded-3xl w-full max-w-md p-8 sm:p-10 text-center relative overflow-hidden">
             <div class="bg-indigo-100 dark:bg-indigo-500/20 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-6 border border-indigo-200 dark:border-indigo-500/30 shadow-lg">
+                <!-- Şık Tasarlanmış Logo Simgesi -->
                 <svg class="w-10 h-10 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
                 </svg>
             </div>
             <h1 class="text-3xl font-bold tracking-tight text-slate-800 dark:text-white mb-2">Veresiye Defteri</h1>
@@ -461,38 +467,47 @@
             }
             document.getElementById('tx-date').value = new Date().toISOString().split('T')[0];
 
-            // Yerel depolamadan yükle
             const localData = JSON.parse(localStorage.getItem('veresiye_shared_pool'));
             if (localData && localData.users) {
                 appData = localData;
             }
 
             if (window.firebaseDb) {
-                await loadFromFirebase();
+                initRealtimeSync();
             } else {
-                window.addEventListener('firebase-ready', async () => {
-                    await loadFromFirebase();
+                window.addEventListener('firebase-ready', () => {
+                    initRealtimeSync();
                 });
             }
         };
 
-        async function loadFromFirebase() {
+        // --- CANLI / ANLIK REALTIME SENRONİZASYON ---
+        function initRealtimeSync() {
             try {
                 const dbRef = window.firebaseRef(window.firebaseDb, 'veresiye_pool');
-                const snapshot = await window.firebaseGet(dbRef);
-                if (snapshot.exists()) {
-                    const remoteData = snapshot.val();
-                    if (remoteData && remoteData.users && Object.keys(remoteData.users).length > 0) {
-                        appData = remoteData;
-                        localStorage.setItem('veresiye_shared_pool', JSON.stringify(appData));
+                window.firebaseOnValue(dbRef, (snapshot) => {
+                    if (snapshot.exists()) {
+                        const remoteData = snapshot.val();
+                        if (remoteData && remoteData.users) {
+                            appData = remoteData;
+                            localStorage.setItem('veresiye_shared_pool', JSON.stringify(appData));
+                            
+                            // Kullanıcı içeride gezinirken veri değiştiyse anında ekranı tazele
+                            if (currentUser) {
+                                const activeView = views.find(v => !v.classList.contains('hidden'))?.id;
+                                if (activeView === 'dashboard-view') {
+                                    renderDashboard();
+                                } else if (activeView === 'customer-view' && currentCustomerId) {
+                                    renderCustomerDetail();
+                                }
+                            }
+                        }
                     } else if (appData.users && Object.keys(appData.users).length > 0) {
-                        await window.firebaseSet(dbRef, appData);
+                        window.firebaseSet(dbRef, appData);
                     }
-                } else if (appData.users && Object.keys(appData.users).length > 0) {
-                    await window.firebaseSet(dbRef, appData);
-                }
+                });
             } catch (err) {
-                console.error("Firebase veri yükleme hatası:", err);
+                console.error("Realtime sync hatası:", err);
             }
         }
 
@@ -540,14 +555,14 @@
 
         window.showCustomerDetail = (id) => {
             currentCustomerId = id;
-            const customer = appData.users[currentUser].customers.find(c => c.id === id);
+            const customer = appData.users[currentUser]?.customers?.find(c => c.id === id);
             if (!customer) return;
             document.getElementById('detail-customer-name').textContent = customer.name;
             renderCustomerDetail();
             switchView('customer-view');
         };
 
-        // --- AUTH İŞLEMLERİ (GÜNCELLENDİ) ---
+        // --- AUTH İŞLEMLERİ ---
         window.handleRegister = async (e) => {
             e.preventDefault();
             const uname = document.getElementById('reg-username').value.trim();
@@ -577,15 +592,10 @@
             showToast("Kayıt başarılı, hoş geldiniz!", "success");
         };
 
-        window.handleLogin = async (e) => {
+        window.handleLogin = (e) => {
             e.preventDefault();
             const uname = document.getElementById('login-username').value.trim();
             const pin = document.getElementById('login-password').value;
-
-            // Giriş anında verileri Firebase'den anlık tazeleyelim (Eşitleme kontrolü)
-            if (window.firebaseDb) {
-                await loadFromFirebase();
-            }
 
             if(!appData.users || !appData.users[uname]) {
                 return showToast("Hesap bulunamadı! Önce kayıt olmalısınız.", "error");
@@ -608,16 +618,19 @@
 
         // --- HESAPLAMA ---
         function getCustomerBalance(customerId) {
+            if(!appData.users[currentUser]) return 0;
             const txs = (appData.users[currentUser].transactions || []).filter(t => t.customerId === customerId);
             return txs.reduce((sum, tx) => sum + (tx.type === 'sale' ? tx.amount : -tx.amount), 0);
         }
 
         function getTotalBalance() {
+            if(!appData.users[currentUser]) return 0;
             return (appData.users[currentUser].customers || []).reduce((sum, c) => sum + getCustomerBalance(c.id), 0);
         }
 
         // --- RENDER ---
         function renderDashboard() {
+            if(!currentUser || !appData.users[currentUser]) return;
             const total = getTotalBalance();
             document.getElementById('total-balance').textContent = currencyFmt.format(total);
             
@@ -661,6 +674,7 @@
         }
 
         function renderCustomerDetail() {
+            if(!currentUser || !currentCustomerId || !appData.users[currentUser]) return;
             const bal = getCustomerBalance(currentCustomerId);
             const balEl = document.getElementById('detail-customer-balance');
             balEl.textContent = currencyFmt.format(bal);
@@ -763,7 +777,6 @@
                 appData.users[currentUser].customers = appData.users[currentUser].customers.filter(c => c.id !== custId);
                 appData.users[currentUser].transactions = appData.users[currentUser].transactions.filter(t => t.customerId !== custId);
                 await saveData();
-                renderDashboard();
                 showToast("Müşteri silindi.", "success");
             });
         };
@@ -772,7 +785,6 @@
             showConfirm("İşlemi Sil", "Bu hatalı işlemi silmek istiyor musunuz?", async () => {
                 appData.users[currentUser].transactions = appData.users[currentUser].transactions.filter(t => t.id !== txId);
                 await saveData();
-                renderCustomerDetail();
                 showToast("İşlem silindi.", "success");
             });
         };
@@ -818,7 +830,6 @@
                 appData.users[currentUser].customers.push({ id: Date.now().toString(), name });
                 await saveData();
                 closeModal('add-customer-modal');
-                renderDashboard();
                 showToast('Müşteri eklendi', 'success');
             }
         };
@@ -850,7 +861,6 @@
                 appData.users[currentUser].transactions.push(tx);
                 await saveData();
                 closeModal('transaction-modal');
-                renderCustomerDetail();
                 showToast('İşlem kaydedildi', 'success');
             }
         };
