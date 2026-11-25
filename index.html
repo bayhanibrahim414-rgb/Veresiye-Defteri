@@ -3,10 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Veresiye Defteri">
+    <meta name="theme-color" content="#6366f1">
     <title>Gelişmiş Veresiye Defteri</title>
     
-    <!-- Özel Şık Uygulama Simgesi (Favicon) -->
+    <!-- Özel Şık Uygulama Simgesi (Favicon ve Ana Ekran İkonu) -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%236366f1'><path d='M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z'/></svg>">
+    <link id="apple-touch-icon" rel="apple-touch-icon" sizes="180x180">
+    <link id="app-manifest" rel="manifest">
+
+    <script>
+        (function setupAppIcon() {
+            const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+                <rect width="512" height="512" fill="#f8fafc"/>
+                <svg x="64" y="64" width="384" height="384" viewBox="0 0 24 24" fill="#6366f1">
+                    <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-2 10h-4v4h-2v-4H7v-2h4V7h2v4h4v2z"/>
+                </svg>
+            </svg>`;
+
+            const svgBlob = new Blob([iconSvg], { type: "image/svg+xml;charset=utf-8" });
+            const svgUrl = URL.createObjectURL(svgBlob);
+            const img = new Image();
+
+            img.onload = function () {
+                const canvas = document.createElement("canvas");
+                canvas.width = 512;
+                canvas.height = 512;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0, 512, 512);
+                URL.revokeObjectURL(svgUrl);
+
+                const pngDataUrl = canvas.toDataURL("image/png");
+
+                const appleIcon = document.getElementById("apple-touch-icon");
+                if (appleIcon) appleIcon.href = pngDataUrl;
+
+                const manifestData = {
+                    name: "Gelişmiş Veresiye Defteri",
+                    short_name: "Veresiye Defteri",
+                    start_url: window.location.href,
+                    display: "standalone",
+                    background_color: "#f8fafc",
+                    theme_color: "#6366f1",
+                    icons: [
+                        {
+                            src: pngDataUrl,
+                            sizes: "512x512",
+                            type: "image/png",
+                            purpose: "any maskable"
+                        }
+                    ]
+                };
+
+                const manifestBlob = new Blob([JSON.stringify(manifestData)], {
+                    type: "application/manifest+json"
+                });
+                const manifestEl = document.getElementById("app-manifest");
+                if (manifestEl) manifestEl.href = URL.createObjectURL(manifestBlob);
+            };
+
+            img.src = svgUrl;
+        })();
+    </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
